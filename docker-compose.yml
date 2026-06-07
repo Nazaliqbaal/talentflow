@@ -1,0 +1,37 @@
+services:
+
+  # ── Backend (C# ASP.NET Core API) ─────────────────────────────────────────
+  backend:
+    # Build the image using the Dockerfile inside the backend folder.
+    build: ./backend
+
+    # Map port 5143 on your machine to port 8080 inside the container.
+    # Format is "host:container" — so http://localhost:5143 hits the API.
+    ports:
+      - "5143:8080"
+
+    # Environment variables injected into the container at runtime.
+    # ASP.NET reads ASPNETCORE_ENVIRONMENT to decide which appsettings to use.
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+
+  # ── Frontend (React + Nginx) ───────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Pass the API URL as a build argument so Vite can bake it into the bundle.
+        # Change this value when deploying to production (e.g. https://api.yourapp.com).
+        VITE_API_URL: http://localhost:5143
+
+    # Map port 3000 on your machine to port 80 inside the container (Nginx default).
+    # So http://localhost:3000 serves the React app.
+    ports:
+      - "3000:80"
+
+    # Don't start the frontend until the backend is up.
+    # "service_started" just means the container is running — not that the API
+    # is ready to accept requests, which is fine for local dev.
+    depends_on:
+      - backend

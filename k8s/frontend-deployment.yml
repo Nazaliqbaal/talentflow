@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 2              # 2 copies of the frontend for high availability.
+                           # K8s load balances between them automatically.
+  selector:
+    matchLabels:
+      app: frontend
+
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: nazaliqbal786/talentflow-frontend:latest
+
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 80    # Nginx listens on port 80 inside the container
+
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: frontend
+
+  ports:
+    - port: 80
+      targetPort: 80
+
+  # LoadBalancer = tells AWS to create an external load balancer with a public IP.
+  # This is how the internet reaches your frontend.
+  # On AWS EKS this automatically provisions an AWS Load Balancer.
+  type: LoadBalancer

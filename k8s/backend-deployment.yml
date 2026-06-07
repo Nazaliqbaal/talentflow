@@ -1,0 +1,65 @@
+apiVersion: apps/v1        # The K8s API version that handles Deployments
+kind: Deployment           # We're defining a Deployment (manages running pods)
+metadata:
+  name: backend            # Name of this Deployment — used to reference it later
+spec:
+  replicas: 2              # Run 2 copies (pods) of the backend at all times.
+                           # If one crashes, K8s restarts it. If a node dies,
+                           # K8s moves the pod to another node automatically.
+
+  selector:
+    matchLabels:
+      app: backend         # This Deployment manages any pod with label "app: backend"
+
+  template:                # Template describes the pod K8s will create
+    metadata:
+      labels:
+        app: backend       # Every pod created by this Deployment gets this label.
+                           # The selector above uses this to find its pods.
+    spec:
+      containers:
+        - name: backend
+          image: nazaliqbal786/talentflow-backend:latest  # Pull from Docker Hub
+
+          imagePullPolicy: Always   # Always pull the latest image on pod start.
+                                    # Use "IfNotPresent" to use cached image instead.
+
+          ports:
+            - containerPort: 8080   # The port your C# API listens on inside the container
+
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
+
+          # Resource limits — tells K8s how much CPU/memory this container needs.
+          # "requests" = minimum guaranteed. "limits" = maximum allowed.
+          # Without this, one container could eat all resources on the node.
+          resources:
+            requests:
+              memory: "128Mi"   # 128 megabytes minimum
+              cpu: "100m"       # 100 millicores = 0.1 CPU core minimum
+            limits:
+              memory: "256Mi"   # 256 megabytes maximum
+              cpu: "200m"       # 200 millicores = 0.2 CPU core maximum
+
+---
+# A Deployment runs pods. A Service exposes them.
+# Pods get random IPs that change when they restart — the Service gives a stable address.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service    # Other pods call this by name e.g. http://backend-service:80
+spec:
+  selector:
+    app: backend           # Forward traffic to all pods with label "app: backend"
+
+  ports:
+    - port: 80             # Port the Service listens on (inside the cluster)
+      targetPort: 8080     # Port on the pod to forward traffic to
+
+  # ClusterIP = only reachable inside the cluster (not from the internet).
+  # The frontend will call the backend via this Service name, not an IP.
+  type: ClusterIP

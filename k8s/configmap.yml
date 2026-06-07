@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap              # ConfigMap stores non-sensitive config as key-value pairs.
+                             # Think of it as a .env file but managed by Kubernetes.
+                             # For secrets (passwords, tokens) you'd use "kind: Secret" instead.
+metadata:
+  name: talentflow-config
+
+data:
+  # These values get injected into pods as environment variables.
+  # Pods reference this ConfigMap by name in their env section.
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:8080"
