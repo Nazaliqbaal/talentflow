@@ -142,12 +142,13 @@ jobs:
 
   # ── JOB 4: Deploy to Kubernetes ─────────────────────────────────────────────
   # Runs after images are pushed. Updates K8s to use the new images.
+  # Disabled until a real cluster is set up (KUBE_CONFIG secret is required).
   deploy:
     name: Deploy to Kubernetes
     runs-on: ubuntu-latest
     needs: [push-images]    # Only deploy if images were pushed successfully
 
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: false  # Remove this line when KUBE_CONFIG secret is added and cluster is ready
 
     steps:
       - name: Checkout code
